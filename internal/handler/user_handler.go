@@ -1,10 +1,14 @@
 package handler
 
 import (
+	"bytes"
+	"fmt"
 	"industry-api/internal/models"
 	"industry-api/internal/response"
 	"industry-api/internal/service"
+	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -89,4 +93,74 @@ func (h *UserHandler) GetUserList(c *gin.Context) {
 		return
 	}
 	response.JSON(c, http.StatusOK, true, "user list retrieved successfully", users, "")
+}
+
+func (h *UserHandler) GetUserByID(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		response.JSON(c, http.StatusBadRequest, false, "missing ID", nil, "ID is required")
+		return
+	}
+	userID, err := strconv.Atoi(id)
+	if err != nil {
+		response.JSON(c, http.StatusBadRequest, false, "invalid ID", nil, "ID must be a valid integer")
+		return
+	}
+	user, err := h.svc.GetUserByID(c, userID)
+	if err != nil {
+		if err.Error() == "user not found" {
+			response.JSON(c, http.StatusNotFound, false, "user not found", nil, err.Error())
+			return
+		}
+		response.JSON(c, http.StatusInternalServerError, false, "failed to get user", nil, err.Error())
+		return
+	}
+	response.JSON(c, http.StatusOK, true, "user retrieved successfully", user, "")
+
+}
+
+func (h *UserHandler) UpdateUserStatus(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		response.JSON(c, http.StatusBadRequest, false, "missing ID", nil, "ID is required")
+		return
+	}
+
+	// Debug the raw request
+	body, _ := c.GetRawData()
+	fmt.Printf("DEBUG: Raw request body: %s\n", string(body))
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	var req models.UpdateUserStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("DEBUG: Binding error: %v\n", err)
+		response.JSON(c, http.StatusBadRequest, false, "invalid request", nil, err.Error())
+		return
+	}
+
+	fmt.Printf("DEBUG: Parsed request - IsActive: %t\n", req.IsActive)
+
+	userID, err := strconv.Atoi(id)
+	if err != nil {
+		response.JSON(c, http.StatusBadRequest, false, "invalid ID", nil, "ID must be a valid integer")
+		return
+	}
+
+	user, err := h.svc.UpdateUserStatus(c, userID, req.IsActive)
+	if err != nil {
+		if err.Error() == "user not found" {
+			response.JSON(c, http.StatusNotFound, false, "user not found", nil, err.Error())
+			return
+		}
+		response.JSON(c, http.StatusInternalServerError, false, "failed to update user status", nil, err.Error())
+		return
+	}
+
+	resp := models.UpdateUserStatusResponse{
+		ID:        user.ID, // ← Now converted to int
+		IsActive:  user.IsActive,
+		UpdatedAt: user.UpdatedAt,
+	}
+
+	response.JSON(c, http.StatusOK, true, "user status updated successfully", resp, "")
 }

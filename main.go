@@ -59,6 +59,8 @@ func main() {
 		users.POST("/register", userHandler.Register)
 		users.POST("/login", userHandler.LoginUser)
 		users.GET("/fetch-users", userHandler.GetUserList)
+		users.GET("/fetch-user-by-id/:id", userHandler.GetUserByID)
+		users.PUT("/update-user-status/:id", userHandler.UpdateUserStatus)
 
 		rooms := v1.Group("/rooms")
 		rooms.POST("/add", roomHandler.AddRoom)

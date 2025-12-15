@@ -30,8 +30,12 @@ type UserListResponse struct {
 	TotalPages int    `json:"total_pages"`
 	Users      []User `json:"users"`
 }
-
 type UpdateUserStatusRequest struct {
-	IsActive bool `json:"is_active"`
-	ID       int  `json:"id"`
+	IsActive bool `json:"is_active" binding:"required"` // ← Add json tag
+}
+
+type UpdateUserStatusResponse struct {
+	ID        string    `json:"id"`
+	IsActive  bool      `json:"is_active"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

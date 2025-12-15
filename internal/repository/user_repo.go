@@ -189,3 +189,57 @@ func (r *UserRepository) scanUsers(rows pgx.Rows) ([]models.User, error) {
 	}
 	return users, nil
 }
+
+func (r *UserRepository) GetUserByID(ctx context.Context, id int) (*models.User, error) {
+	query := `SELECT id, name, email, password_hash, phone, role, created_at
+		FROM users
+		WHERE id = $1`
+	var user models.User
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.Password,
+		&user.Phone,
+		&user.Role,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+	return &user, nil
+
+}
+
+func (r *UserRepository) UpdateUserStatus(ctx context.Context, id int, isActive bool) (*models.User, error) {
+
+	query := `
+	UPDATE users 
+	SET is_active = $1
+	WHERE id=$2
+	RETURNING id, name, email, password_hash, phone, role, created_at, updated_at
+	`
+	var user models.User
+	err := r.db.QueryRow(ctx, query, isActive, id).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.Password,
+		&user.Phone,
+		&user.Role,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("failed to update user status: %w", err)
+	}
+
+	return &user, nil
+
+}
