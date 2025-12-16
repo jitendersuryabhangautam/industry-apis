@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"industry-api/internal/models"
+	"industry-api/internal/testsetup"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestRoomsRepo_CreateAndList(t *testing.T) {
+	_ = testsetup.LoadEnv()
 	dsn := os.Getenv("TEST_DB_URL")
 	if dsn == "" {
 		dsn = os.Getenv("DB_URL")

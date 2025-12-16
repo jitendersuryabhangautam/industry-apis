@@ -36,7 +36,10 @@ type UserListResponse struct {
 
 // UpdateUserStatusRequest represents the HTTP request body for updating user status.
 type UpdateUserStatusRequest struct {
-	IsActive bool `json:"is_active" binding:"required"` // New active status
+	// Use a pointer so that boolean "false" is considered present by the validator.
+	// If we use a plain bool with `binding:"required"`, a JSON value of `false`
+	// is treated as the zero value and the validator will consider it missing.
+	IsActive *bool `json:"is_active" binding:"required"` // New active status
 }
 
 // UpdateUserStatusResponse represents the HTTP response when updating user status.

@@ -74,7 +74,7 @@ func main() {
 
 	// ========== Payment Management Setup ==========
 	paymentRepo := repository.NewPaymentRepository(db.DB)
-	paymentService := service.NewPaymentRepository(paymentRepo)
+	paymentService := service.NewPaymentService(paymentRepo)
 	paymentHandler := handler.NewPaymentHandler(paymentService)
 
 	// ========== Route Configuration ==========

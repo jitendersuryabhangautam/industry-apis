@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"industry-api/internal/models"
+	"industry-api/internal/testsetup"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -15,6 +16,8 @@ import (
 // TEST_DB_URL or DB_URL. Tests create and then delete their test rows to keep
 // the same DB usable for other development tasks.
 func TestUserRepository_CreateAndGet(t *testing.T) {
+	// Load .env from repo root (if present) so TEST_DB_URL/DB_URL are available
+	_ = testsetup.LoadEnv()
 	dsn := os.Getenv("TEST_DB_URL")
 	if dsn == "" {
 		dsn = os.Getenv("DB_URL")
@@ -41,7 +44,7 @@ func TestUserRepository_CreateAndGet(t *testing.T) {
 		Email:    email,
 		Password: "hash-placeholder",
 		Phone:    "0000000000",
-		Role:     "guest",
+		Role:     "admin",
 	}
 
 	// Create

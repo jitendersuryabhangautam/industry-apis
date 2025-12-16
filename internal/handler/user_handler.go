@@ -179,7 +179,13 @@ func (h *UserHandler) UpdateUserStatus(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("DEBUG: Parsed request - IsActive: %t\n", req.IsActive)
+	// Ensure the boolean was provided (pointer non-nil)
+	if req.IsActive == nil {
+		response.JSON(c, http.StatusBadRequest, false, "invalid request", nil, "is_active is required")
+		return
+	}
+
+	fmt.Printf("DEBUG: Parsed request - IsActive: %t\n", *req.IsActive)
 
 	// Convert string ID to integer
 	userID, err := strconv.Atoi(id)
@@ -189,7 +195,7 @@ func (h *UserHandler) UpdateUserStatus(c *gin.Context) {
 	}
 
 	// Call service to update user status
-	user, err := h.svc.UpdateUserStatus(c, userID, req.IsActive)
+	user, err := h.svc.UpdateUserStatus(c, userID, *req.IsActive)
 	if err != nil {
 		// Return 404 Not Found if user doesn't exist
 		if err.Error() == "user not found" {

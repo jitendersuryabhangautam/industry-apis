@@ -7,10 +7,13 @@ import (
 
 	"industry-api/internal/models"
 
+	"industry-api/internal/testsetup"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestPaymentRepository_InitiateAndCleanup(t *testing.T) {
+	_ = testsetup.LoadEnv()
 	dsn := os.Getenv("TEST_DB_URL")
 	if dsn == "" {
 		dsn = os.Getenv("DB_URL")

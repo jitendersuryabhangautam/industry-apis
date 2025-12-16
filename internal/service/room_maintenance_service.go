@@ -12,12 +12,12 @@ import (
 // RoomMaintenanceService handles all room maintenance-related business logic operations.
 // It acts as an intermediary between handlers and repository layers.
 type RoomMaintenanceService struct {
-	repo *repository.RoomMaintenanceRepository // Repository layer for data access
+	repo repository.RoomMaintenanceRepo // Repository interface for testing
 }
 
 // NewRoomMaintenanceService creates and returns a new instance of RoomMaintenanceService.
-// It accepts a RoomMaintenanceRepository dependency for data access operations.
-func NewRoomMaintenanceService(repo *repository.RoomMaintenanceRepository) *RoomMaintenanceService {
+// It accepts a RoomMaintenanceRepo interface for data access operations.
+func NewRoomMaintenanceService(repo repository.RoomMaintenanceRepo) *RoomMaintenanceService {
 	return &RoomMaintenanceService{repo: repo}
 }
 

@@ -17,12 +17,18 @@ var Client *redis.Client
 
 // Init initializes the Redis client by reading the connection address from environment variables.
 // It creates a new Redis client, attempts to connect, and verifies connectivity with a ping.
-// If connection fails, the function will panic with an error message.
+// If connection fails, it logs a warning but does not panic, allowing the application to continue without caching.
 func Init() {
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		fmt.Println("⚠️  REDIS_ADDR not configured; skipping Redis initialization")
+		return
+	}
+
 	// Create a new Redis client with configuration from environment variables
 	// REDIS_ADDR should be in the format "hostname:port" (e.g., "localhost:6379")
 	Client = redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_ADDR"),
+		Addr:     redisAddr,
 		Password: "", // Add password if your Redis server requires authentication
 		DB:       0,  // Default database index
 	})
@@ -34,8 +40,10 @@ func Init() {
 	// Verify Redis connectivity by sending a ping command
 	_, err := Client.Ping(ctx).Result()
 	if err != nil {
-		// Panic if connection fails - this indicates a critical startup error
-		panic(fmt.Sprintf("failed to connect to redis: %v", err))
+		// Log warning if connection fails, but continue without caching
+		fmt.Printf("⚠️  Failed to connect to Redis: %v - Application will continue without caching\n", err)
+		Client = nil // Set Client to nil so handlers can check if Redis is available
+		return
 	}
 	fmt.Println("✅ Redis connected successfully")
 }

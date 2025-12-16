@@ -12,12 +12,12 @@ import (
 // PaymentService handles all payment-related business logic operations.
 // It acts as an intermediary between handlers and repository layers.
 type PaymentService struct {
-	repo *repository.PaymentRepository // Repository layer for data access
+	repo repository.PaymentRepo // Repository interface for easier testing
 }
 
-// NewPaymentRepository creates and returns a new instance of PaymentService.
-// It accepts a PaymentRepository dependency for data access operations.
-func NewPaymentRepository(repo *repository.PaymentRepository) *PaymentService {
+// NewPaymentService creates and returns a new instance of PaymentService.
+// It accepts a PaymentRepo interface for data access operations.
+func NewPaymentService(repo repository.PaymentRepo) *PaymentService {
 	return &PaymentService{repo: repo}
 }
 
