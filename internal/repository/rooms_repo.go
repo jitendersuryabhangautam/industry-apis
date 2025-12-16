@@ -1,3 +1,5 @@
+// Package repository provides database access layer implementations.
+// Repositories handle all direct database operations using SQL queries.
 package repository
 
 import (
@@ -8,15 +10,30 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// RoomRepository provides database access for room operations.
 type RoomRepository struct {
-	db *pgxpool.Pool
+	db *pgxpool.Pool // Database connection pool
 }
 
+// RoomRepo defines the methods used by services for room data access.
+type RoomRepo interface {
+	AddRoom(ctx context.Context, room *models.Room) error
+	GetRoomsList(ctx context.Context) ([]*models.Room, error)
+	GetAvailableRooms(ctx context.Context) ([]*models.Room, error)
+}
+
+// NewRoomRepository creates and returns a new instance of RoomRepository.
+// It accepts a database connection pool for executing database operations.
 func NewRoomRepository(db *pgxpool.Pool) *RoomRepository {
 	return &RoomRepository{db: db}
 }
 
+// AddRoom inserts a new room record into the database.
+// It executes an INSERT query with room details and returns the generated room ID and timestamps.
+// The room is created with is_available set to TRUE by default.
+// Returns nil on success or an error if the database operation fails.
 func (r *RoomRepository) AddRoom(ctx context.Context, room *models.Room) error {
+	// SQL query to insert a new room record
 	query := `
     INSERT INTO rooms 
         (room_number, room_type, description, price_per_night, capacity, floor, amenities, is_available)
@@ -27,17 +44,18 @@ func (r *RoomRepository) AddRoom(ctx context.Context, room *models.Room) error {
 
 	fmt.Printf("Repository: Executing query with amenities: %v\n", room.Amenities)
 
+	// Execute the insert query and scan the returned ID and timestamps
 	// No conversion needed - room.Amenities is already []string
 	err := r.db.QueryRow(
 		ctx,
 		query,
-		room.RoomNumber,
-		room.RoomType,
-		room.Description,
-		room.Price,
-		room.Capacity,
-		room.Floor,
-		room.Amenities, // Pass the slice directly
+		room.RoomNumber,  // Room number identifier
+		room.RoomType,    // Type of room
+		room.Description, // Room description
+		room.Price,       // Price per night
+		room.Capacity,    // Guest capacity
+		room.Floor,       // Floor number
+		room.Amenities,   // List of amenities
 	).Scan(&room.ID, &room.CreatedAt, &room.UpdatedAt)
 
 	if err != nil {
@@ -49,6 +67,9 @@ func (r *RoomRepository) AddRoom(ctx context.Context, room *models.Room) error {
 	return nil
 }
 
+// GetRoomsList retrieves all rooms from the database.
+// It returns a list of all rooms with their complete details.
+// Returns a slice of room pointers or an error if the database query fails.
 func (r *RoomRepository) GetRoomsList(ctx context.Context) ([]*models.Room, error) {
 	query := `
     SELECT id, room_number, room_type, description, price_per_night, capacity, floor, amenities, is_available, created_at, updated_at
@@ -85,6 +106,9 @@ func (r *RoomRepository) GetRoomsList(ctx context.Context) ([]*models.Room, erro
 	return roomsList, nil
 }
 
+// GetAvailableRooms retrieves all rooms that are currently available for booking.
+// It filters for rooms where is_available is true.
+// Returns a slice of available room pointers or an error if the database query fails.
 func (r *RoomRepository) GetAvailableRooms(ctx context.Context) ([]*models.Room, error) {
 	query := `
 	SELECT id, room_number, room_type, description, price_per_night, capacity, floor, amenities, is_available

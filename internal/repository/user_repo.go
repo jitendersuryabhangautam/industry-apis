@@ -1,3 +1,5 @@
+// Package repository provides database access layer implementations.
+// Repositories handle all direct database operations using SQL queries.
 package repository
 
 import (
@@ -10,25 +12,46 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type UserRepository struct {
-	db *pgxpool.Pool
+// UserRepo defines the methods required by services for user data access.
+// This allows services to depend on an interface so tests can provide mocks.
+type UserRepo interface {
+	CreateUser(ctx context.Context, user *models.User) error
+	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	GetUserByID(ctx context.Context, id int) (*models.User, error)
+	UpdateUserStatus(ctx context.Context, id int, isActive bool) (*models.User, error)
+	GetUserList(ctx context.Context, role string, isActive *bool, search string, page, limit int) (*models.UserListResponse, error)
 }
 
+// UserRepository provides database access for user operations.
+type UserRepository struct {
+	db *pgxpool.Pool // Database connection pool
+}
+
+// NewUserRepository creates and returns a new instance of UserRepository.
+// It accepts a database connection pool for executing database operations.
 func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 	return &UserRepository{db: db}
 }
 
+// CreateUser inserts a new user record into the database.
+// It executes an INSERT query with user details and returns the generated user ID and creation timestamp.
+// Returns an error if the database operation fails.
 func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) error {
 
+	// SQL query to insert a new user record
 	query := `
 		INSERT INTO users ( name, email, password_hash,Phone, role)
 		VALUES ($1,$2,$3,$4,$5)
 		Returning id, created_at
 	`
+	// Execute the insert query and scan the returned ID and timestamp
 	return r.db.QueryRow(ctx, query, user.Name, user.Email, user.Password, user.Phone, user.Role).Scan(&user.ID, &user.CreatedAt)
 
 }
 
+// GetUserByEmail retrieves a user by their email address.
+// It queries the database for a user with the matching email and returns their complete details.
+// Returns the user pointer or an error if not found or database operation fails.
 func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	query := `
@@ -51,6 +74,9 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 
 }
 
+// GetUserList retrieves a paginated list of users with optional filtering.
+// It supports filtering by role, active status, and search term (name/email).
+// It also supports pagination - if limit is 0, returns all records without pagination.
 func (r *UserRepository) GetUserList(ctx context.Context, role string, isActive *bool, search string, page, limit int) (*models.UserListResponse, error) {
 	// Build dynamic query
 	baseQuery := `
